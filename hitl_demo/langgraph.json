@@ -1,0 +1,7 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "graph": "./src/websample.py:graph"
+  },
+  "env": "./.env"
+}
