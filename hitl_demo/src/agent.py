@@ -1,4 +1,12 @@
 
+# src/agent.py
+import os
+
+# 强制设置环境变量（在所有 import 之前）
+os.environ["LANGSMITH_API_KEY"] = "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"
+os.environ["LANGSMITH_TRACING"] = "true"
+os.environ["LANGSMITH_PROJECT"] = "hitl_demo"
+os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.runtime import Runtime
 import time
@@ -25,8 +33,7 @@ from langsmith import traceable
 from loguru import logger
 from langgraph.types import Send, Command, CachePolicy, interrupt
 from langchain.messages import HumanMessage, AIMessage, SystemMessage
-load_dotenv(override=True)
-
+# load_dotenv(override=True)
 
 model = ChatDeepSeek(
     model="deepseek-v4-flash",
@@ -45,6 +52,8 @@ class OverAllState(TypedDict):
 
 @traceable(name="get_info_node", run_type="chain")
 def get_info_node(state: OverAllState) -> OverAllState:
+    model.invoke("你是谁")
+
     username=interrupt("请输入您的用户名:")
     age= interrupt("请输入您的年龄:")
     gender=interrupt("请输入您的性别:(male/female)")
