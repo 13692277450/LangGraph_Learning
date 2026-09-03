@@ -29,11 +29,10 @@ from langchain_deepseek import ChatDeepSeek
 from dotenv import load_dotenv
 from langchain.tools import tool
 from langgraph.managed.is_last_step import RemainingSteps
-from langsmith import traceable
 from loguru import logger
 from langgraph.types import Send, Command, CachePolicy, interrupt
 from langchain.messages import HumanMessage, AIMessage, SystemMessage
-# load_dotenv(override=True)
+load_dotenv(override=True)
 
 model = ChatDeepSeek(
     model="deepseek-v4-flash",
@@ -50,9 +49,20 @@ class OverAllState(TypedDict):
     age: int # #
     gender: Literal["male", "female"] # #/
 
-@traceable(name="get_info_node", run_type="chain")
 def get_info_node(state: OverAllState) -> OverAllState:
-    model.invoke("你是谁")
+    # model.invoke("你是谁")
+
+    username=interrupt("请输入您的用户名:")
+    age= interrupt("请输入您的年龄:")
+    gender=interrupt("请输入您的性别:(male/female)")
+
+    return {
+        "username": username,
+        "age": age,
+        "gender": gender
+    }
+def get_info_node2(state: OverAllState) -> OverAllState:
+    # model.invoke("你是谁")
 
     username=interrupt("请输入您的用户名:")
     age= interrupt("请输入您的年龄:")
@@ -66,9 +76,12 @@ def get_info_node(state: OverAllState) -> OverAllState:
 
 builder = StateGraph(state_schema=OverAllState)
 builder.add_node("get_info_node", get_info_node)
+builder.add_node("get_info_node2", get_info_node2)
+
 builder.add_edge(START, "get_info_node")
-builder.add_edge( "get_info_node", END)
+builder.add_edge( "get_info_node", "get_info_node2")
+
+builder.add_edge( "get_info_node2", END)
 
 graph = builder.compile()
 
-display(graph)

@@ -1,10 +1,16 @@
 from typing import Literal
+
+import logger
 from langchain.messages import HumanMessage
 from langchain_openai import ChatOpenAI
+from langchain_deepseek import ChatDeepSeek
 from langchain.tools import tool
 from langgraph.prebuilt import ToolNode
 from langgraph.graph import StateGraph, MessagesState
+from dotenv import load_dotenv
+from loguru import logger
 
+load_dotenv()
 @tool
 def search(query: str):
     """Call to surf the web."""
@@ -15,7 +21,7 @@ def search(query: str):
 tools = [search]
 tool_node = ToolNode(tools)
 
-model = ChatOpenAI(model="gpt-4.1", temperature=0).bind_tools(tools)
+model = ChatDeepSeek(model="deepseek-v4-flash", temperature=0).bind_tools(tools)
 
 def should_continue(state: MessagesState) -> Literal["tools", "__end__"]:
     messages = state['messages']
@@ -30,7 +36,7 @@ def call_model(state: MessagesState):
     response = model.invoke(messages)
     return {"messages": [response]}
 
-workflow = StateGraph(MessagesState)
+workflow = StateGraph(state_schema=MessagesState)
 workflow.add_node("agent", call_model)
 workflow.add_node("tools", tool_node)
 workflow.add_edge("__start__", "agent")
@@ -40,11 +46,11 @@ workflow.add_conditional_edges(
 )
 workflow.add_edge("tools", 'agent')
 
-app = workflow.compile()
+graph = workflow.compile()
 
-final_state = app.invoke(
+final_state = graph.invoke(
     {"messages": [HumanMessage(content="what is the weather in sf")]},
     config={"configurable": {"thread_id": 42}}
 )
 
-final_state["messages"][-1].content
+logger.info(final_state["messages"])
